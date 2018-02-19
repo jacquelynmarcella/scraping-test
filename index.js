@@ -2,102 +2,40 @@ var request = require('request');
 var cheerio = require('cheerio');
 var async = require('async');
 
+// Import previously scraped urls
+var productUrls = require("./productUrls.js");
 
+// When the user searches, scrape all data from cosdna
+var search = "glossier milky jelly"
 
-var getProducts = async function() {
-	let productUrls = await scrapeData();
-	await console.log("urls is", productUrls);
-}
-
-
-
-getProducts();
-
-
-
-function scrapeData (){
-
-		
-
-		return new Promise((resolve, reject) => {
-			let allUrls = [];
-
-			console.log("got to first function");
-
-			request('https://www.sephora.com/shop/foundation-makeup?pageSize=300', function(error, response, data){
-					var $ = cheerio.load(data);
-
-					allUrls = $('.css-1tguw7u').map(function(index, element){
-						return "https://www.sephora.com" + $(element).attr('href')
-					}).get(); 
-
-					resolve(allUrls);
-					console.log("within request",allUrls);
-
-			});
-					
-		});
-
-}
-
-
-
-
-
-// function getUrls() {
-// 	var productUrls;
-
-// 	request('https://www.sephora.com/shop/foundation-makeup?pageSize=300', function(error, response,data){
-
-// 		var $ = cheerio.load(data);
-
-// 		productUrls = $('.css-1tguw7u').map(function(index, element){
+// request('http://www.cosdna.com/eng/product.php?q=' + search + '&s=3', function(error, response, data){
+// 	var $ = cheerio.load(data);
+// 		var products = $('.ProdName a').map(function(index, element){
 // 			return {
-// 				link: "https://www.sephora.com" + $(element).attr('href')
+// 				name: $(element).text(),
+// 				url: $(element).attr('href')
 // 			}
-// 		}).get(); 
-// 	})
-// 	resolve(productUrls);
-// }
+// 		}).get();		
+// 		console.log(products)
+// });
 
 
-// console.log(urls);
-	
-
-// function getIngredients(urls, callback) {
-
-// 	console.log(urls);
-// 	// var productInfo = urls.map(function(index, element){
-
-// 	// 	console.log(element);
-
-// 	// })
-
-// 	// 	request(element, function(error, response, data){
-
-// 	// 		var $ = cheerio.load(data);
-
-// 	// 		var ingredients = $('body > div.css-68zqxa > div.css-5gcev7 > div > div:nth-child(2) > div:nth-child(1) > div > div > div.css-1103zjq > div.css-x2d2di > div.css-1lqspdf > div > div > div:nth-child(3) > div').text();
-
-// 	// 		ingredients = ingredients.replace(".", ",")
-// 	// 		ingredients = ingredients.replace("May Contain (+/-):", "")
-// 	// 		ingredients = ingredients.split(',')
-
-// 	// 		var brandName = $('body > div.css-68zqxa > div.css-5gcev7 > div > div:nth-child(2) > div:nth-child(1) > div > div > div.css-1103zjq > div.css-x2d2di > div.css-xp7g4z > div.css-1kaybv4 > h1 > a > span').text();
-// 	// 		var productName = $('body > div.css-68zqxa > div.css-5gcev7 > div > div:nth-child(2) > div:nth-child(1) > div > div > div.css-1103zjq > div.css-x2d2di > div.css-xp7g4z > div.css-1kaybv4 > h1 > span').text();
-
-// 	// 		return {
-// 	// 			brandName: brandName,
-// 	// 			productName: productName,
-// 	// 			ingredients: ingredients,
-// 	// 			url: element
-// 	// 		}
-
-// 	// 	})
-
-// 	// }).get();
-
-// 	callback(null, urls);
-// }
-
-
+var searchUrl = "cosmetic_7b39298861.html"
+// Then once the user selects the product, show those details
+request('http://www.cosdna.com/eng/' + searchUrl, function(error, response, data){
+	var $ = cheerio.load(data);
+	var ingredientsTable = [];
+	var resultsTable = $('.iStuffTable tbody tr');
+	for (var i=2; i<=resultsTable.length; i++) {
+		var tableRow = '#pagebase > div.IngContent > div.IngResult > table > tbody > tr:nth-child(' + i + ')'
+		let ingredient = {
+			name: $(tableRow + ' > td.iStuffETitle > a').text(),
+			ingredientFunction: $(tableRow + ' > td:nth-child(2)').text(),
+			acne: $(tableRow + ' > td:nth-child(3)').text(),
+			irritant: $(tableRow + ' > td:nth-child(4)').text(),
+			safety: $(tableRow + ' > td:nth-child(5) > div').text()
+		}
+		ingredientsTable.push(ingredient);
+		console.log(ingredientsTable);
+	}	
+});
